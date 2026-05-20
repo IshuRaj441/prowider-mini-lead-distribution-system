@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Provider {
+  id              Int              @id @default(autoincrement())
+  name            String
+  monthlyQuota    Int              @default(10)
+  remainingQuota  Int              @default(10)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  leadAssignments LeadAssignment[]
+
+  @@index([remainingQuota])
+  @@index([id, remainingQuota])
+}
+
+model Service {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  createdAt       DateTime         @default(now())
+  allocationState AllocationState?
+  leads           Lead[]
+}
+
+model Lead {
+  id              Int              @id @default(autoincrement())
+  customerName    String
+  phoneNumber     String
+  city            String
+  description     String
+  serviceId       Int
+  createdAt       DateTime         @default(now())
+  service         Service          @relation(fields: [serviceId], references: [id])
+  leadAssignments LeadAssignment[]
+
+  @@unique([phoneNumber, serviceId])
+  @@index([serviceId])
+  @@index([createdAt])
+  @@index([phoneNumber])
+  @@index([serviceId, createdAt])
+}
+
+model LeadAssignment {
+  id         Int      @id @default(autoincrement())
+  leadId     Int
+  providerId Int
+  assignedAt DateTime @default(now())
+  lead       Lead     @relation(fields: [leadId], references: [id])
+  provider   Provider @relation(fields: [providerId], references: [id])
+
+  @@unique([leadId, providerId])
+  @@index([leadId])
+  @@index([providerId])
+  @@index([assignedAt])
+  @@index([leadId, providerId])
+}
+
+model AllocationState {
+  id           Int      @id @default(autoincrement())
+  serviceId    Int      @unique
+  currentIndex Int      @default(0)
+  updatedAt    DateTime @updatedAt
+  service      Service  @relation(fields: [serviceId], references: [id])
+}
+
+model WebhookEvent {
+  id          Int      @id @default(autoincrement())
+  eventId     String   @unique
+  processedAt DateTime @default(now())
+
+  @@index([eventId])
+}

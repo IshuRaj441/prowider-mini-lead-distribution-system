@@ -1,0 +1,46 @@
+# FIX #12: Docker Compose Configuration
+# For local development and production deployment
+
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/prowider_lead_db?schema=public
+      - REDIS_URL=redis://redis:6379
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-dev-secret-change-in-production}
+      - LOG_LEVEL=INFO
+      - NODE_ENV=production
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Ishu@1234
+      - POSTGRES_DB=prowider_lead_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
