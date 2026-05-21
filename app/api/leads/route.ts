@@ -30,30 +30,29 @@ export async function POST(request: NextRequest) {
 
     // Use transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx: any) => {
-      // Check for duplicate lead (phoneNumber + serviceId unique constraint)
-      const existingLead = await tx.lead.findUnique({
-        where: {
-          phoneNumber_serviceId: {
+      // Create the lead (unique on phoneNumber + serviceId enforced at DB level)
+      let lead
+      try {
+        lead = await tx.lead.create({
+          data: {
+            customerName: validatedData.customerName,
             phoneNumber: validatedData.phoneNumber,
+            city: validatedData.city,
+            description: validatedData.description,
             serviceId: validatedData.serviceId,
           },
-        },
-      })
-
-      if (existingLead) {
-        throw new DuplicateLeadError(validatedData.phoneNumber, validatedData.serviceId)
+        })
+      } catch (error: unknown) {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          (error as { code: string }).code === 'P2002'
+        ) {
+          throw new DuplicateLeadError(validatedData.phoneNumber, validatedData.serviceId)
+        }
+        throw error
       }
-
-      // Create the lead
-      const lead = await tx.lead.create({
-        data: {
-          customerName: validatedData.customerName,
-          phoneNumber: validatedData.phoneNumber,
-          city: validatedData.city,
-          description: validatedData.description,
-          serviceId: validatedData.serviceId,
-        },
-      })
 
       // Assign providers using allocation engine
       const assignedProviderIds = await AllocationService.assignProvidersToLead(
