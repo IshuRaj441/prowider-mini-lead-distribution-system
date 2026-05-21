@@ -116,9 +116,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!signature) {
-      if (process.env.NODE_ENV === 'development' && !webhookSecret) {
-        console.warn('Skipping signature verification in development without secret')
-      } else {
+      const isInternalTestTool =
+        process.env.NODE_ENV === 'development' && !process.env.API_KEY
+
+      if (!isInternalTestTool) {
         return NextResponse.json(
           {
             success: false,
@@ -126,6 +127,10 @@ export async function POST(request: NextRequest) {
           },
           { status: 401 }
         )
+      }
+
+      if (process.env.LOG_LEVEL === 'DEBUG') {
+        console.warn('Signature verification skipped for internal test tool (API_KEY not configured)')
       }
     } else if (webhookSecret && !verifyWebhookSignature(rawBody, signature, webhookSecret)) {
       return NextResponse.json(

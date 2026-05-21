@@ -19,13 +19,13 @@ export default function TestToolsPage() {
         eventId,
         timestamp: new Date().toISOString(),
       })
-      
-      // Generate HMAC signature if webhook secret is configured
+
       const webhookSecret = process.env.NEXT_PUBLIC_WEBHOOK_SECRET
       let headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'x-test-mode': 'true',
       }
-      
+
       if (webhookSecret) {
         const encoder = new TextEncoder()
         const key = await crypto.subtle.importKey(
@@ -45,7 +45,7 @@ export default function TestToolsPage() {
           .join('')
         headers['x-webhook-signature'] = signatureHex
       }
-      
+
       const response = await fetch('/api/webhooks/reset-quota', {
         method: 'POST',
         headers,
@@ -111,13 +111,13 @@ export default function TestToolsPage() {
         eventId,
         timestamp: new Date().toISOString(),
       })
-      
-      // Generate HMAC signature if webhook secret is configured
+
       const webhookSecret = process.env.NEXT_PUBLIC_WEBHOOK_SECRET
       let headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'x-test-mode': 'true',
       }
-      
+
       if (webhookSecret) {
         const encoder = new TextEncoder()
         const key = await crypto.subtle.importKey(
@@ -137,7 +137,7 @@ export default function TestToolsPage() {
           .join('')
         headers['x-webhook-signature'] = signatureHex
       }
-      
+
       // Trigger the same webhook 3 times to test idempotency
       const promises = Array.from({ length: 3 }, () =>
         fetch('/api/webhooks/reset-quota', {
