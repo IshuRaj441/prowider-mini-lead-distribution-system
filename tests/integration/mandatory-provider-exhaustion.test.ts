@@ -13,13 +13,15 @@ import { MandatoryProviderUnavailableError } from '@/lib/errors/app-error'
 
 describe('Mandatory Provider Exhaustion', () => {
   beforeAll(async () => {
-    // Setup test database
-    await prisma.provider.deleteMany()
-    await prisma.lead.deleteMany()
+    // Setup test database (delete children before parents due to FK constraints)
     await prisma.leadAssignment.deleteMany()
+    await prisma.lead.deleteMany()
     await prisma.allocationState.deleteMany()
+    await prisma.webhookEvent.deleteMany()
+    await prisma.provider.deleteMany()
 
     // Create test providers
+
     await prisma.provider.createMany({
       data: [
         { id: 1, name: 'Provider 1', monthlyQuota: 10, remainingQuota: 0 }, // Mandatory, exhausted
@@ -29,11 +31,14 @@ describe('Mandatory Provider Exhaustion', () => {
       ],
     })
 
-    // Create test service
-    await prisma.service.create({
-      data: { id: 1, name: 'Test Service' },
+    // Create/ensure test service (service name is unique)
+    await prisma.service.upsert({
+      where: { id: 1 },
+      update: { name: 'Test Service' },
+      create: { id: 1, name: 'Test Service' },
     })
   })
+
 
   afterAll(async () => {
     await prisma.$disconnect()

@@ -48,11 +48,11 @@ export async function GET(request: NextRequest) {
           const logger = (await import('@/lib/logger')).logger
           logger.error('Error subscribing to Redis:', error as Error)
           // Fallback to in-memory if Redis fails
-          useInMemoryFallback(controller, request, sendEvent)
+          handleInMemoryFallback(controller, request, sendEvent)
         }
       } else {
         // Use in-memory fallback for development
-        useInMemoryFallback(controller, request, sendEvent)
+        handleInMemoryFallback(controller, request, sendEvent)
       }
 
       // Clean up on connection close
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 /**
  * Fallback to in-memory EventEmitter for development
  */
-function useInMemoryFallback(
+function handleInMemoryFallback(
   controller: ReadableStreamDefaultController,
   request: NextRequest,
   sendEvent: (data: unknown) => void

@@ -1,11 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // FIX #12: Enable standalone output for Docker
-  output: 'standalone',
-  // FIX #12: Optimize for production
-  swcMinify: true,
-  compress: true,
   // FIX #12: Security headers
   async headers() {
     return [

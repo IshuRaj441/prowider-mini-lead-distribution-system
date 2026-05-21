@@ -22,8 +22,8 @@ beforeEach(async () => {
   await prisma.lead.deleteMany()
   await prisma.allocationState.deleteMany()
   await prisma.webhookEvent.deleteMany()
-  // FIX #12: Reset provider quotas to avoid conflicts between tests
-  await prisma.provider.updateMany({
-    data: { remainingQuota: 10 },
-  })
+
+  // Do NOT reset provider quotas here.
+  // Individual tests control provider quota/fixtures to keep scenarios deterministic.
 })
+

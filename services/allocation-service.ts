@@ -185,10 +185,12 @@ export class AllocationService {
    * Mark a webhook event as processed
    */
   static async markWebhookEventProcessed(tx: any, eventId: string): Promise<void> {
-    await tx.webhookEvent.create({
-      data: {
-        eventId,
-      },
+    // Idempotent write to avoid Prisma P2002 (unique constraint) -> HTTP 409
+    // Assumes `eventId` is uniquely constrained in the `webhookEvent` table.
+    await tx.webhookEvent.upsert({
+      where: { eventId },
+      create: { eventId },
+      update: {},
     })
   }
 }

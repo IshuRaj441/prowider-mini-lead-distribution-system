@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export default function RequestServicePage() {
@@ -174,12 +175,12 @@ export default function RequestServicePage() {
           </form>
 
           <div className="mt-6 text-center">
-            <a
+            <Link
               href="/"
               className="text-blue-600 hover:text-blue-700 text-sm"
             >
               ← Back to Home
-            </a>
+            </Link>
           </div>
         </div>
       </div>
