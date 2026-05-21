@@ -27,8 +27,9 @@ describe('Webhook Idempotency', () => {
     
     // Process event first time
     await prisma.$transaction(async (tx: any) => {
+      const claimed = await AllocationService.claimWebhookEvent(tx, eventId)
+      expect(claimed).toBe(true)
       await AllocationService.resetProviderQuotas(tx)
-      await AllocationService.markWebhookEventProcessed(tx, eventId)
     })
 
     // Try to process same event again
@@ -42,15 +43,11 @@ describe('Webhook Idempotency', () => {
     // Simulate 10 concurrent webhook requests with same eventId
     const promises = Array.from({ length: 10 }, async () => {
       return prisma.$transaction(async (tx: any) => {
-        const alreadyProcessed = await AllocationService.isWebhookEventProcessed(tx, eventId)
-        
-        if (alreadyProcessed) {
+        const claimed = await AllocationService.claimWebhookEvent(tx, eventId)
+        if (!claimed) {
           return { processed: false, skipped: true }
         }
-
         await AllocationService.resetProviderQuotas(tx)
-        await AllocationService.markWebhookEventProcessed(tx, eventId)
-        
         return { processed: true, skipped: false }
       })
     })
@@ -70,8 +67,9 @@ describe('Webhook Idempotency', () => {
     
     for (const eventId of eventIds) {
       await prisma.$transaction(async (tx: any) => {
+        const claimed = await AllocationService.claimWebhookEvent(tx, eventId)
+        expect(claimed).toBe(true)
         await AllocationService.resetProviderQuotas(tx)
-        await AllocationService.markWebhookEventProcessed(tx, eventId)
       })
     }
 

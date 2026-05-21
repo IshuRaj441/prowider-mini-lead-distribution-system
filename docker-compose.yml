@@ -11,7 +11,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/prowider_lead_db?schema=public
+      - DATABASE_URL=postgresql://postgres:Ishu%401234@db:5432/prowider_lead_db?schema=public
       - REDIS_URL=redis://redis:6379
       - WEBHOOK_SECRET=${WEBHOOK_SECRET:-dev-secret-change-in-production}
       - LOG_LEVEL=INFO

@@ -55,7 +55,11 @@ export default function DashboardPage() {
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      if (data.type === 'lead-created' || data.type === 'quota-reset') {
+      if (
+        data.type === 'lead-created' ||
+        data.type === 'quota-reset' ||
+        data.type === 'bulk-leads-created'
+      ) {
         fetchProviders()
       }
     }
