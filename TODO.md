@@ -1,10 +1,12 @@
-# TODO
+# TODO - Prowider Mini Lead Distribution System
 
-- [ ] Update `AllocationService.markWebhookEventProcessed` to use idempotent DB write (`upsert`), preventing Prisma `P2002` → HTTP 409. ✅
-- [x] Re-run/typecheck (tests) to ensure no other webhook-idempotency paths still use `create()` for the same unique key.
-- [x] Fix failing allocation tests caused by mandatory-provider quota checks / fairness.
-
-- [x] Ensure webhook fix doesn’t break idempotency logic (all tests).
-- [x] Make test suite deterministic (fix FK delete order + provider fixture assumptions).
-
+- [x] Run test suite (jest) and capture any failures
+- [x] Run typecheck/lint (if available)
+- [ ] Verify required routes exist and match spec:
+  - [x] `/request-service` customer form creates leads and enforces duplicate phone+service at DB level
+  - [x] `/dashboard` shows provider quota + assigned leads
+  - [x] `/test-tools` reset-quota + generate-10-concurrent + webhook idempotency buttons
+- [x] Fix failing tests / requirement mismatches (allocation logic, quotas, concurrency, webhook idempotency, SSE)
+- [x] Re-run tests to confirm fixes
+- [x] Prepare final submission notes (allocation algorithm, concurrency strategy, webhook idempotency)
 
