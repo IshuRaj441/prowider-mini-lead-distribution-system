@@ -13,35 +13,39 @@ import { MandatoryProviderUnavailableError } from '@/lib/errors/app-error'
 
 describe('Mandatory Provider Exhaustion', () => {
   beforeAll(async () => {
-    // Setup test database (delete children before parents due to FK constraints)
     await prisma.leadAssignment.deleteMany()
     await prisma.lead.deleteMany()
-    await prisma.allocationState.deleteMany()
-    await prisma.webhookEvent.deleteMany()
-    await prisma.provider.deleteMany()
 
-    // Create test providers
+    const providerIds = [1, 2, 3, 4, 5, 6, 7, 8]
+    for (const id of providerIds) {
+      await prisma.provider.upsert({
+        where: { id },
+        update: {},
+        create: {
+          id,
+          name: `Provider ${id}`,
+          monthlyQuota: 10,
+          remainingQuota: 10,
+        },
+      })
+    }
 
-    await prisma.provider.createMany({
-      data: [
-        { id: 1, name: 'Provider 1', monthlyQuota: 10, remainingQuota: 0 }, // Mandatory, exhausted
-        { id: 2, name: 'Provider 2', monthlyQuota: 10, remainingQuota: 10 },
-        { id: 3, name: 'Provider 3', monthlyQuota: 10, remainingQuota: 10 },
-        { id: 4, name: 'Provider 4', monthlyQuota: 10, remainingQuota: 10 },
-      ],
+    await prisma.provider.update({
+      where: { id: 1 },
+      data: { remainingQuota: 0 },
     })
 
-    // Create/ensure test service (service name is unique)
     await prisma.service.upsert({
       where: { id: 1 },
-      update: { name: 'Test Service' },
-      create: { id: 1, name: 'Test Service' },
+      update: { name: 'Service 1' },
+      create: { id: 1, name: 'Service 1' },
     })
   })
 
-
   afterAll(async () => {
-    await prisma.$disconnect()
+    await prisma.provider.updateMany({
+      data: { remainingQuota: 10 },
+    })
   })
 
   it('should fail transaction when mandatory provider has no quota', async () => {
