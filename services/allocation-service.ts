@@ -163,11 +163,15 @@ export class AllocationService {
    * This is idempotent - can be called multiple times safely
    */
   static async resetProviderQuotas(tx: any): Promise<void> {
-    await tx.provider.updateMany({
-      data: {
-        remainingQuota: 10,
-      },
-    })
+    const providers = await tx.provider.findMany({ select: { id: true, monthlyQuota: true } })
+    await Promise.all(
+      providers.map((p: { id: number; monthlyQuota: number }) =>
+        tx.provider.update({
+          where: { id: p.id },
+          data: { remainingQuota: p.monthlyQuota },
+        })
+      )
+    )
   }
 
   /**
@@ -184,13 +188,24 @@ export class AllocationService {
   /**
    * Mark a webhook event as processed
    */
-  static async markWebhookEventProcessed(tx: any, eventId: string): Promise<void> {
-    // Idempotent write to avoid Prisma P2002 (unique constraint) -> HTTP 409
-    // Assumes `eventId` is uniquely constrained in the `webhookEvent` table.
-    await tx.webhookEvent.upsert({
-      where: { eventId },
-      create: { eventId },
-      update: {},
-    })
+  /**
+   * Claim webhook event for processing. Returns true if this caller won the claim.
+   * Uses unique constraint on eventId for exactly-once semantics under concurrency.
+   */
+  static async claimWebhookEvent(tx: any, eventId: string): Promise<boolean> {
+    try {
+      await tx.webhookEvent.create({ data: { eventId } })
+      return true
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        (error as { code: string }).code === 'P2002'
+      ) {
+        return false
+      }
+      throw error
+    }
   }
 }

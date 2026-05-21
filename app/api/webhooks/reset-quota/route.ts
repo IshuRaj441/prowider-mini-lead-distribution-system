@@ -145,33 +145,11 @@ export async function POST(request: NextRequest) {
     // Validate webhook payload
     const validatedData = webhookSchema.parse(body)
 
-    // FIX #3: Check idempotency BEFORE transaction
-    // This prevents the race condition where event is marked processed but quota reset fails
-    const alreadyProcessed = await AllocationService.isWebhookEventProcessed(
-      prisma,
-      validatedData.eventId
-    )
-
-    if (alreadyProcessed) {
-      return NextResponse.json(
-        {
-          success: true,
-          message: 'Event already processed',
-          skipped: true,
-        },
-        { status: 200 }
-      )
-    }
-
-    // Only start transaction if event hasn't been processed
+    // Claim event inside transaction: insert-first + unique constraint = exactly-once
     const result = await prisma.$transaction(async (tx: any) => {
-      // Double-check inside transaction for safety (optimistic locking)
-      const alreadyProcessedInTx = await AllocationService.isWebhookEventProcessed(
-        tx,
-        validatedData.eventId
-      )
+      const claimed = await AllocationService.claimWebhookEvent(tx, validatedData.eventId)
 
-      if (alreadyProcessedInTx) {
+      if (!claimed) {
         return {
           success: true,
           message: 'Event already processed',
@@ -179,11 +157,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Reset all provider quotas to 10
       await AllocationService.resetProviderQuotas(tx)
-
-      // Mark this event as processed
-      await AllocationService.markWebhookEventProcessed(tx, validatedData.eventId)
 
       return {
         success: true,

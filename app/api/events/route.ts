@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         handleInMemoryFallback(controller, request, sendEvent)
       }
 
-      // Clean up on connection close
+      // Clean up on connection close (per-client listeners only)
       request.signal.addEventListener('abort', async () => {
         if (useRedis) {
           try {
@@ -63,11 +63,6 @@ export async function GET(request: NextRequest) {
           } catch (error) {
             const logger = (await import('@/lib/logger')).logger
             logger.error('Error unsubscribing from Redis:', error as Error)
-          }
-        } else {
-          // Clean up in-memory listeners
-          if (global.leadUpdateEmitter) {
-            global.leadUpdateEmitter.removeAllListeners()
           }
         }
         controller.close()
