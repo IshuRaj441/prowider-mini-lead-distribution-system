@@ -35,7 +35,12 @@ export default function RequestServicePage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit request')
+        const apiError = data.error
+        const message =
+          typeof apiError === 'string'
+            ? apiError
+            : apiError?.message || 'Failed to submit request'
+        throw new Error(message)
       }
 
       setSuccess(true)

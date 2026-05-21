@@ -36,7 +36,9 @@ export async function GET() {
       health.status = 'degraded'
     }
 
-    // Check Redis connectivity (if configured)
+    // Redis is required only in production (distributed SSE)
+    const redisRequired =
+      process.env.REDIS_URL && process.env.NODE_ENV === 'production'
     if (process.env.REDIS_URL) {
       try {
         const { getRedisClient } = await import('@/lib/redis')
@@ -49,8 +51,11 @@ export async function GET() {
         health.checks.redis = {
           status: 'unhealthy',
           error: error instanceof Error ? error.message : 'Unknown error',
+          required: redisRequired,
         }
-        health.status = 'degraded'
+        if (redisRequired) {
+          health.status = 'degraded'
+        }
       }
     }
 
