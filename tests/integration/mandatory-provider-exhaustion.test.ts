@@ -34,12 +34,6 @@ describe('Mandatory Provider Exhaustion', () => {
       where: { id: 1 },
       data: { remainingQuota: 0 },
     })
-
-    await prisma.service.upsert({
-      where: { id: 1 },
-      update: { name: 'Service 1' },
-      create: { id: 1, name: 'Service 1' },
-    })
   })
 
   afterAll(async () => {
